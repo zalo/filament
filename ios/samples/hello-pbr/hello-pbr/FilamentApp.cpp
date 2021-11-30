@@ -18,11 +18,13 @@
 
 #include <filament/Material.h>
 #include <filament/Viewport.h>
+#include <filament/SwapChain.h>
 
 #include <filameshio/MeshReader.h>
 
 #include <image/KtxUtility.h>
 
+#include <iostream>
 #include <sstream>
 
 // This file is generated via the "Run Script" build phase and contains the mesh, material, and IBL
@@ -33,12 +35,16 @@ using namespace filament;
 using namespace filamesh;
 
 void FilamentApp::initialize() {
+    screenshot_on_next_frame=false;
+    no_more_screenshots=false;
+    pixels=0;
+    
 #if FILAMENT_APP_USE_OPENGL
     engine = Engine::create(filament::Engine::Backend::OPENGL);
 #elif FILAMENT_APP_USE_METAL
     engine = Engine::create(filament::Engine::Backend::METAL);
 #endif
-    swapChain = engine->createSwapChain(nativeLayer);
+    swapChain = engine->createSwapChain(nativeLayer, SwapChain::CONFIG_TRANSPARENT | SwapChain::CONFIG_READABLE);
     renderer = engine->createRenderer();
     scene = engine->createScene();
     Entity c = EntityManager::get().create();
@@ -104,14 +110,56 @@ void FilamentApp::initialize() {
 }
 
 void FilamentApp::render() {
+    static void *screenshot_raw_buffer=0;
+    
     if (renderer->beginFrame(swapChain)) {
         renderer->render(filaView);
+        
+        if(pixels==0 && screenshot_on_next_frame) {
+            std::cerr << "TRACK: Setting up for readPixels " << width << " x " << height << std::endl;
+            no_more_screenshots=true;
+            size_t bufsize = width * height * 4;
+            std::cerr << "TRACK: Buffer size = " << bufsize << std::endl;
+            pixels = new uint8_t[bufsize];
+            for(size_t i=0; i<bufsize; ++i)
+                pixels[i]=231;
+            filament::backend::PixelBufferDescriptor screenshot_buffer(pixels, bufsize,
+                                        filament::backend::PixelBufferDescriptor::PixelDataFormat::RGBA,
+                                        filament::backend::PixelBufferDescriptor::PixelDataType::UBYTE,
+                                        [](void* buffer, size_t size, void* user) {
+                                            std::cerr << "TRACK: Pixels are ready" << std::endl;
+                                            screenshot_raw_buffer = buffer;
+                                        }, nullptr);
+            
+            std::cerr << "TRACK: Calling readPixels" << std::endl;
+            renderer->readPixels(0, 0, width, height, std::move(screenshot_buffer));
+            std::cerr << "TRACK: Request queued, now we wait for the callback" << std::endl;
+        }
         renderer->endFrame();
+        
+        if(screenshot_on_next_frame) {
+            if(screenshot_raw_buffer!=0) {
+                std::cerr << "TRACK: Buffer filled, ready to write to disk." << std::endl;
+                for(size_t i=0; i<10; ++i)
+                    std::cerr << "TRACK: byte " << i << " = " << (int)((uint8_t *)screenshot_raw_buffer)[i] << std::endl;
+                screenshot_on_next_frame=false;
+                screenshot_raw_buffer=0;
+                delete [] pixels;
+            }
+        }
     }
 }
 
 void FilamentApp::pan(float deltaX, float deltaY) {
     cameraManipulator.rotate(filament::math::double2(deltaX, -deltaY), 10);
+}
+
+void FilamentApp::screenshot() {
+    if(!no_more_screenshots) {
+        no_more_screenshots=true;
+        screenshot_on_next_frame=true;
+        std::cerr << "TRACK: Screenshot on next frame" << std::endl;
+    }
 }
 
 FilamentApp::~FilamentApp() {

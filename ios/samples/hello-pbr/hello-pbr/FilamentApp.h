@@ -45,7 +45,8 @@ public:
     void initialize();
     void render();
     void pan(float deltaX, float deltaY);
-
+    void screenshot();
+    
 private:
 
     void updateRotation();
@@ -79,6 +80,9 @@ private:
 
     CameraManipulator cameraManipulator;
 
+    bool screenshot_on_next_frame;
+    bool no_more_screenshots;
+    uint8_t *pixels;
 };
 
 #endif /* FilamentApp_h */

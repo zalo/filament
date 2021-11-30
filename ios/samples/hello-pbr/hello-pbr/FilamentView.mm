@@ -112,6 +112,7 @@
     CGPoint delta = CGPointMake(location.x - previousLocation.x, location.y - previousLocation.y);
     previousLocation = location;
     app->pan(delta.x, delta.y);
+    app->screenshot();
 }
 
 @end
