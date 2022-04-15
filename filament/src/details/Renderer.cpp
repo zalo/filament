@@ -1190,13 +1190,13 @@ void FRenderer::endFrame() {
     }
 
     mFrameInfoManager.endFrame(driver);
-    mFrameSkipper.endFrame(driver);
 
     if (mSwapChain) {
         mSwapChain->commit(driver);
         mSwapChain = nullptr;
     }
 
+    mFrameSkipper.endFrame(driver);
     driver.endFrame(mFrameId);
 
     // gives the backend a chance to execute periodic tasks
