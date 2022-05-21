@@ -77,4 +77,17 @@ will likely need to manually modify the following files:
  - android/filament-android/src/main/java/.../View.java
  - android/filament-android/src/main/cpp/View.cpp
 `)
+
+	sources := []string{
+		filepath.Join(root, "libs", "gltfio", "src", "SourceAsset.h"),
+	}
+	for _, source := range sources {
+		log.SetPrefix(filepath.Base(source) + ":")
+		data, err = os.ReadFile(source)
+		if err != nil {
+			log.Fatal(err)
+		}
+		contents = string(data)
+		parse.Parse(contents)
+	}
 }
