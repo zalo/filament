@@ -731,8 +731,8 @@ func lexField(lex *lexer) error {
 
 // For now, SimpleType is a very restrictive subset of the C++ type expression language. It should
 // not contain parentheses or commas, so C callbacks are not allowed unless you alias them first.
-// Template specializations must also be aliased. Basically, a type is a bag of tokens that must
-// include exactly one valid C identifier, along with a mix of spaces, "*", "&", "::", "const".
+// Basically, a type is a bag of tokens that must include exactly one valid C identifier, along with
+// a mix of spaces, "*", "&", "::", "const", "<", ">".
 //
 // Assumptions: cursor is just before a type identifier
 // Directly emits: itemSimpleType
@@ -740,10 +740,10 @@ func lexSimpleType(lex *lexer) error {
 	encounteredIdentifier := false
 	for {
 		switch {
-		case lex.acceptString("::"):
+		case lex.acceptString("::"), lex.acceptRune('<'):
 			encounteredIdentifier = false
 			continue
-		case lex.acceptAny("*& \t\n"):
+		case lex.acceptAny("*& >\t\n"):
 			continue
 		case lex.acceptKeyword("const"):
 			continue

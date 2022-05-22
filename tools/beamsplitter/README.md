@@ -77,8 +77,6 @@ caveats:
   `UTILS_PUBLIC` and `UTILS_DEPRECATED`).
 - Comments are removed by the lexer and are generally not part of the resulting AST. However
   the lexer proffers a mapping from line numbers to comments to allow for docstring extraction.
-- The grammar makes a special case for comments that contain `@{` or `@}`, these are part of the AST
-  to make it easy to emit them in the target language.
 - Emitter flags in the form `%codegen_foo%` are detected in a post-processing phase and removed from
   all comments.
 
@@ -114,7 +112,7 @@ DefaultValue                | an unparsed expression with certain restrictions (
 Identifier                  | `[A-Za-z_][A-Za-z0-9_]*`
 
 (*) `SimpleType` should not contain parentheses or commas, so C callbacks are not allowed unless
-you alias them first. Template specializations must also be aliased.
+you alias them first.
 
 ## References
 
