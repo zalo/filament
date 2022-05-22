@@ -84,7 +84,7 @@ caveats:
 
 ```eBNF
 root = namespace ;
-namespace = "namespace" , [ident] , "{" , { block } , "}" ;
+namespace = "namespace" , [ ident ] , "{" , { block } , "}" ;
 block = class | struct | enum | namespace | using | forward_declaration;
 forward_declaration = ("class" | "struct" ) , ident , ";" ;
 template = "template" , "TemplateArgs" ;
@@ -97,11 +97,20 @@ struct_body = { access_specifier | field | method | block } ;
 access_specifier = ("public" | "private" | "protected" ) , ":" ;
 method = [template] , { "constexpr" , "friend } ,
     , type , ident , "MethodArgs" , specifiers , ( ";" | "MethodBody" ) ;
-specifiers = { "const" | "noexcept" }
-field = type , ident , [ "=" , "DefaultValue" ] ";" ;
+specifiers = { "const" | "noexcept" } ;
+field = type , ident , [ array ] , [ "=" , "DefaultValue" ] ";" ;
+array = "[" , "ArrayLength", "]" ;
 type = "SimpleType" ;
 ident = "Identifier" ;
 ```
+The above grammar uses the following notation:
+- `" ... "` denotes a terminal
+- `{ ... }` denotes zero or more repetition
+- `[ ... ]` denotes an optional quantity
+- `( ... )` is used for grouping
+- `a | b` denotes a choice
+- `a , b` denotes concatenation
+- `;` terminates a production
 
 Terminal name               | Description
 --------------------------- | ----
@@ -111,6 +120,7 @@ MethodArgs                  | similar to above; an unparsed blob, but delimited 
 TemplateArgs                | similar to above; an unparsed blob, but delimited with `<>`
 DefaultValue                | an unparsed expression with certain restrictions (see note about vectors)
 Identifier                  | `[A-Za-z_][A-Za-z0-9_]*`
+ArrayLength                 | `[1-9][0-9]*`
 
 (*) `SimpleType` should not contain parentheses or commas, so C callbacks are not allowed unless
 you alias them first.

@@ -71,8 +71,9 @@ type MethodNode struct {
 }
 
 type FieldNode struct {
-	Line int
-	Name string
-	Type string
-	Rhs  string
+	Line        int
+	Name        string
+	Type        string
+	Rhs         string
+	ArrayLength int
 }

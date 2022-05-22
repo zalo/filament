@@ -18,6 +18,7 @@ package parse
 
 import (
 	"log"
+	"strconv"
 )
 
 // Consumes the entire content of a C++ header file and produces an abstract syntax tree.
@@ -82,24 +83,32 @@ func parseStructBody(lex *lexer) []Node {
 		case item.typ == itemSimpleType:
 			name := expect(lex, itemIdentifier)
 			nextItem := lex.nextItem()
+			arrayLength := 0
+			if nextItem.typ == itemOpenBracket {
+				arrayLength, _ = strconv.Atoi(expect(lex, itemArrayLength).val)
+				expect(lex, itemCloseBracket)
+				nextItem = lex.nextItem()
+			}
 			switch nextItem.typ {
 			case itemMethodArgs:
 				parseMethod(name, item, nextItem, false)
 			case itemSemicolon:
 				append(&FieldNode{
-					Line: item.line,
-					Name: name.val,
-					Type: item.val,
-					Rhs:  "",
+					Line:        item.line,
+					Name:        name.val,
+					Type:        item.val,
+					Rhs:         "",
+					ArrayLength: arrayLength,
 				})
 			case itemEquals:
 				rhs := expect(lex, itemDefaultValue)
 				expect(lex, itemSemicolon)
 				append(&FieldNode{
-					Line: item.line,
-					Name: name.val,
-					Type: item.val,
-					Rhs:  rhs.val,
+					Line:        item.line,
+					Name:        name.val,
+					Type:        item.val,
+					Rhs:         rhs.val,
+					ArrayLength: arrayLength,
 				})
 			}
 		case item.typ == itemTemplate:
@@ -286,5 +295,5 @@ func expect(lex *lexer, expectedType itemType) item {
 func panic(lex *lexer, unexpected item) {
 	lex.drain()
 	// Very useful local hack: change this to Panicf to see a call stack.
-	log.Fatalf("%d: parser sees unexpected lexeme %s", unexpected.line, unexpected.String())
+	log.Panicf("%d: parser sees unexpected lexeme %s", unexpected.line, unexpected.String())
 }

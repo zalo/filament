@@ -69,6 +69,9 @@ const (
 	itemEquals
 	itemOpenBrace
 	itemSemicolon
+	itemOpenBracket
+	itemCloseBracket
+	itemArrayLength
 
 	itemKeywords_ // unused enum separator
 	itemClass
@@ -197,6 +200,16 @@ func (lex *lexer) acceptAlphaNumeric() bool {
 	}
 	lex.backup()
 	return false
+}
+
+func (lex *lexer) acceptPositiveInteger() bool {
+	next := lex.next()
+	if !unicode.IsDigit(next) || next == '0' {
+		lex.backup()
+		return false
+	}
+	lex.acceptRun("123456789")
+	return true
 }
 
 // Consumes a run of runes from the valid set.
@@ -398,6 +411,7 @@ func lookahead(lex *lexer, cb func(*lexer) error) bool {
 	previousLine := lex.line
 	if err := cb(lex); err == nil {
 		for _, item := range lex.lookahead {
+			fmt.Printf("Emitting %s\n", item.String())
 			lex.items <- item
 		}
 		lex.lookahead = nil
@@ -728,6 +742,17 @@ func lexField(lex *lexer) error {
 		return errors.New("valid identifier")
 	}
 	lex.emit(itemIdentifier)
+	if lex.acceptRune('[') {
+		lex.emit(itemOpenBracket)
+		if !lex.acceptPositiveInteger() {
+			return errors.New("positive integer")
+		}
+		lex.emit(itemArrayLength)
+		if !lex.acceptRune(']') {
+			return errors.New("valid array length")
+		}
+		lex.emit(itemCloseBracket)
+	}
 	if lex.acceptRune('=') {
 		lex.emit(itemEquals)
 		if !lex.acceptTerminatedBlob(';') {

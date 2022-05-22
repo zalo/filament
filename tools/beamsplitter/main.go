@@ -79,7 +79,7 @@ will likely need to manually modify the following files:
 `)
 
 	sources := []string{
-		filepath.Join(root, "libs", "gltfio", "src", "SourceAsset.h"),
+		//filepath.Join(root, "libs", "gltfio", "src", "SourceAsset.h"),
 	}
 
 	apiPath := filepath.Join(root, "filament", "include", "filament")
