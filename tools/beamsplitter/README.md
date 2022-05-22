@@ -95,7 +95,8 @@ enum = "enum" , "class" , ident , [ ":" , type ]
 using = "using" , ident , "=", type , ";" ;
 struct_body = { access_specifier | field | method | block } ;
 access_specifier = ("public" | "private" | "protected" ) , ":" ;
-method = [template] , type , ident , "MethodArgs" , specifiers , ( ";" | "MethodBody" ) ;
+method = [template] , { "constexpr" , "friend } ,
+    , type , ident , "MethodArgs" , specifiers , ( ";" | "MethodBody" ) ;
 specifiers = { "const" | "noexcept" }
 field = type , ident , [ "=" , "DefaultValue" ] ";" ;
 type = "SimpleType" ;

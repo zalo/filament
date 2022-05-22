@@ -59,6 +59,8 @@ func parseStructBody(lex *lexer) []Node {
 	}
 	for item := lex.nextItem(); item.typ != itemCloseBrace; item = lex.nextItem() {
 		switch {
+		case item.val == "constexpr", item.val == "friend":
+			// do nothing for these annotations
 		case item.val == "enum":
 			append(parseEnum(lex))
 		case item.val == "struct":

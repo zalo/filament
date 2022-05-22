@@ -25,7 +25,8 @@ import (
 	"unicode/utf8"
 )
 
-const VERBOSE_LEXER = false
+var VERBOSE_LEXER = false
+var KNOWN_MACROS = []string{"UTILS_PUBLIC"}
 
 // item represents a token or text string returned from the scanner.
 type item struct {
@@ -41,7 +42,7 @@ func (i item) String() string {
 		return "EOF"
 	case i.typ == itemError:
 		return i.val
-	case i.typ > itemKeyword:
+	case i.typ > itemKeywords_:
 		return fmt.Sprintf("<%s>", i.val)
 	case len(i.val) > 20:
 		return fmt.Sprintf("%.10q...", i.val)
@@ -62,25 +63,26 @@ const (
 	itemIdentifier                   // legal C++ identifier
 	itemEOF
 
-	itemSymbol // unused enum separator
-	itemOpenBrace
 	itemCloseBrace
-	itemSemicolon
 	itemColon
-	itemEquals
 	itemComma
+	itemEquals
+	itemOpenBrace
+	itemSemicolon
 
-	itemKeyword // unused enum separator
-	itemNamespace
+	itemKeywords_ // unused enum separator
 	itemClass
 	itemConst
-	itemNoexcept
-	itemStruct
+	itemConstexpr
 	itemEnum
-	itemTemplate
-	itemPublic
-	itemProtected
+	itemFriend
+	itemNamespace
+	itemNoexcept
 	itemPrivate
+	itemProtected
+	itemPublic
+	itemStruct
+	itemTemplate
 	itemUsing
 )
 
@@ -303,6 +305,11 @@ func (lex *lexer) acceptDelimitedBlob(start rune, stop rune) bool {
 // Discards whitespace, linefeeds, comments, and C preprocessor directives.
 func (lex *lexer) discardOptionalSpace() {
 	for {
+		for _, macro := range KNOWN_MACROS {
+			if lex.acceptKeyword(macro) {
+				lex.discard()
+			}
+		}
 		switch {
 		case lex.acceptSpace():
 			lex.acceptRun(" \n\t")
@@ -676,6 +683,12 @@ func lexMethod(lex *lexer) error {
 			return errors.New("template arguments")
 		}
 		lex.emit(itemTemplateArgs)
+	}
+	if lex.acceptKeyword("friend") {
+		lex.emit(itemFriend)
+	}
+	if lex.acceptKeyword("constexpr") {
+		lex.emit(itemConstexpr)
 	}
 	if err := lexSimpleType(lex); err != nil {
 		return err
