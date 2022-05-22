@@ -451,6 +451,17 @@ func lexBlock(lex *lexer) error {
 	switch {
 	case lex.acceptKeyword("namespace"):
 		return lexNamespace(lex)
+	case lex.acceptKeyword("template"):
+		lex.emit(itemTemplate)
+		if !lex.acceptDelimitedBlob('<', '>') {
+			return errors.New("template arguments")
+		}
+		lex.emit(itemTemplateArgs)
+		if !lex.acceptKeywords([]string{"class", "struct"}) {
+			return errors.New("class or struct")
+		}
+		lex.backupKeyword()
+		return lexBlock(lex)
 	case lex.acceptKeyword("struct"):
 		lex.emit(itemStruct)
 		if lookahead(lex, lexForwardDeclaration) {
@@ -610,7 +621,7 @@ func lexUsing(lex *lexer) error {
 // Indirect emits: entire content of the struct or class, but not the outer braces
 func lexStructBody(lex *lexer) error {
 	accessKeywords := []string{"public", "private", "protected"}
-	blockKeywords := []string{"class", "struct", "enum", "using"}
+	blockKeywords := []string{"class", "struct", "enum", "using", "template", "namespace"}
 	for {
 		switch {
 		case lex.acceptRune('}'):

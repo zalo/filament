@@ -89,23 +89,16 @@ root = namespace ;
 namespace = "namespace" , [ident] , "{" , { block } , "}" ;
 block = class | struct | enum | namespace | using | forward_declaration;
 forward_declaration = ("class" | "struct" ) , ident , ";" ;
-class = "class" , ident , [":" , ident ] , "{" , struct_body  , "}" , ";" ;
-struct = "struct" , ident , "{" , struct_body , "}" , ";" ;
-enum = "enum" , "class" , ident , [":" , type ] , "{" ,
-    , ident , { "," , ident }
-    , [ "," ] , "}" , ";" ;
+template = "template" , "TemplateArgs" ;
+class = [template] , "class" , ident , [ ":" , ident ] , "{" , struct_body  , "}" , ";" ;
+struct = [template] , "struct" , ident , "{" , struct_body , "}" , ";" ;
+enum = "enum" , "class" , ident , [ ":" , type ]
+    , "{" , , ident , { "," , ident } , [ "," ] , "}" , ";" ;
 using = "using" , ident , "=", type , ";" ;
-struct_body = { access_specifier
-    | field
-    | method
-    | block } ;
+struct_body = { access_specifier | field | method | block } ;
 access_specifier = ("public" | "private" | "protected" ) , ":" ;
-method = [ "template" , "TemplateArgs" ]
-    , type
-    , ident
-    , "MethodArgs"
-    , { "const" | "noexcept" }
-    , ( ";" | "MethodBody" ) ;
+method = [template] , type , ident , "MethodArgs" , specifiers , ( ";" | "MethodBody" ) ;
+specifiers = { "const" | "noexcept" }
 field = type , ident , [ "=" , "DefaultValue" ] ";" ;
 type = "SimpleType" ;
 ident = "Identifier" ;

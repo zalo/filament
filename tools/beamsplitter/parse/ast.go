@@ -30,15 +30,17 @@ type NamespaceNode struct {
 }
 
 type ClassNode struct {
-	Line    int
-	Name    string
-	Members []Node
+	Line       int
+	Name       string
+	Members    []Node
+	IsTemplate bool
 }
 
 type StructNode struct {
-	Line    int
-	Name    string
-	Members []Node
+	Line       int
+	Name       string
+	Members    []Node
+	IsTemplate bool
 }
 
 type EnumNode struct {

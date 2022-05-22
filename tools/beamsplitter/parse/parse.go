@@ -236,6 +236,20 @@ func parseNamespace(lex *lexer) *NamespaceNode {
 
 	for ; item.typ != itemCloseBrace; item = lex.nextItem() {
 		switch item.typ {
+		case itemTemplate:
+			expect(lex, itemTemplateArgs)
+			switch lex.nextItem().typ {
+			case itemClass:
+				node := parseClass(lex)
+				node.IsTemplate = true
+				append(node)
+			case itemStruct:
+				node := parseStruct(lex)
+				node.IsTemplate = true
+				append(node)
+			default:
+				panic(lex, item)
+			}
 		case itemClass:
 			append(parseClass(lex))
 		case itemStruct:
