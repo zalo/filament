@@ -81,6 +81,15 @@ will likely need to manually modify the following files:
 	sources := []string{
 		filepath.Join(root, "libs", "gltfio", "src", "SourceAsset.h"),
 	}
+
+	apiPath := filepath.Join(root, "filament", "include", "filament")
+	entries, err := os.ReadDir(apiPath)
+	for _, entry := range entries {
+		foo := filepath.Join(apiPath, entry.Name())
+		sources = append(sources, foo)
+	}
+
+	parse.VERBOSE_LEXER = true
 	for _, source := range sources {
 		log.SetPrefix(filepath.Base(source) + ":")
 		data, err = os.ReadFile(source)
