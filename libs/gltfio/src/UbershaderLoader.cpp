@@ -34,6 +34,10 @@ using namespace filament::uberz;
 using namespace gltfio;
 using namespace utils;
 
+#if !defined(NDEBUG)
+utils::io::ostream& operator<<(utils::io::ostream& out, const filament::uberz::ArchiveRequirements& reqs);
+#endif
+
 namespace {
 
 using CullingMode = MaterialInstance::CullingMode;
@@ -287,3 +291,41 @@ MaterialProvider* createUbershaderLoader(filament::Engine* engine) {
 }
 
 } // namespace gltfio
+
+
+#if !defined(NDEBUG)
+
+inline
+const char* toString(Shading shadingModel) noexcept {
+    switch (shadingModel) {
+        case Shading::UNLIT: return "unlit";
+        case Shading::LIT: return "lit";
+        case Shading::SUBSURFACE: return "subsurface";
+        case Shading::CLOTH: return "cloth";
+        case Shading::SPECULAR_GLOSSINESS: return "specularGlossiness";
+    }
+}
+
+inline
+const char* toString(BlendingMode blendingMode) noexcept {
+    switch (blendingMode) {
+        case BlendingMode::OPAQUE: return "opaque";
+        case BlendingMode::TRANSPARENT: return "transparent";
+        case BlendingMode::ADD: return "add";
+        case BlendingMode::MASKED: return "masked";
+        case BlendingMode::FADE: return "fade";
+        case BlendingMode::MULTIPLY: return "multiply";
+        case BlendingMode::SCREEN: return "screen";
+    }
+}
+
+io::ostream& operator<<(io::ostream& out, const ArchiveRequirements& reqs) {
+    out << "    ShadingModel = " << toString(reqs.shadingModel) << '\n'
+        << "    BlendingMode = " << toString(reqs.blendingMode) << '\n';
+    for (const auto& pair : reqs.features) {
+        out << "    " << pair.first.c_str() << " = " << (pair.second ? "true" : "false") << '\n';
+    }
+    return out;
+}
+
+#endif

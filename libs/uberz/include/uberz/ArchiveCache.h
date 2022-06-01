@@ -26,7 +26,6 @@
 
 #include <utils/CString.h>
 #include <utils/FixedCapacityVector.h>
-#include <utils/ostream.h>
 
 namespace filament::uberz {
 
@@ -59,9 +58,5 @@ namespace filament::uberz {
     };
 
 } // namespace filament::uberz
-
-#if !defined(NDEBUG)
-utils::io::ostream& operator<<(utils::io::ostream& out, const filament::uberz::ArchiveRequirements& reqs);
-#endif
 
 #endif // UBERZ_ARCHIVE_CACHE_H
