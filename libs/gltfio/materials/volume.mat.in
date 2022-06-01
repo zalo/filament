@@ -60,7 +60,16 @@ material {
 
         // IOR
         { type : float, name : ior }
+
+
+        ${CUSTOM_PARAMS}
     ],
+}
+
+vertex {
+  void materialVertex(inout MaterialVertexInputs material) {
+      ${CUSTOM_VERTEX}
+    }
 }
 
 fragment {
@@ -132,5 +141,7 @@ fragment {
             uv = (vec3(uv, 1.0) * materialParams.emissiveUvMatrix).xy;
             material.emissive.rgb *= texture(materialParams_emissiveMap, uv).rgb;
         }
+
+        ${CUSTOM_FRAGMENT}
     }
 }
