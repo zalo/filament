@@ -494,8 +494,11 @@ int main(int argc, char** argv) {
             }
         }
 
-        app.materials = (app.materialSource == GENERATE_SHADERS) ?
-                createMaterialGenerator(engine) : createUbershaderLoader(engine);
+        const void* ubershaderArchive = GLTF_VIEWER_DEFAULT_MATERIALS_DATA;
+        const size_t ubershaderSize = GLTF_VIEWER_DEFAULT_MATERIALS_SIZE;
+        app.materials = (app.materialSource == GENERATE_SHADERS) ? createMaterialGenerator(engine) :
+                createUbershaderLoader(engine, ubershaderArchive, ubershaderSize);
+
         app.assetLoader = AssetLoader::create({engine, app.materials, app.names });
         app.mainCamera = &view->getCamera();
         if (filename.isEmpty()) {

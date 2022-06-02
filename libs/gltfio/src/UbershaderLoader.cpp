@@ -26,8 +26,6 @@
 
 #include <uberz/ArchiveCache.h>
 
-#include "gltfresources.h"
-
 using namespace filament;
 using namespace filament::math;
 using namespace filament::uberz;
@@ -35,7 +33,7 @@ using namespace gltfio;
 using namespace utils;
 
 #if !defined(NDEBUG)
-utils::io::ostream& operator<<(utils::io::ostream& out, const filament::uberz::ArchiveRequirements& reqs);
+io::ostream& operator<<(io::ostream& out, const ArchiveRequirements& reqs);
 #endif
 
 namespace {
@@ -44,7 +42,7 @@ using CullingMode = MaterialInstance::CullingMode;
 
 class UbershaderLoader : public MaterialProvider {
 public:
-    UbershaderLoader(filament::Engine* engine);
+    UbershaderLoader(Engine* engine, const void* archive, size_t archiveByteCount);
     ~UbershaderLoader() {}
 
     MaterialInstance* createMaterialInstance(MaterialKey* config, UvMap* uvmap,
@@ -73,7 +71,9 @@ public:
     Engine* mEngine;
 };
 
-UbershaderLoader::UbershaderLoader(Engine* engine) : mEngine(engine), mMaterials(*engine) {
+UbershaderLoader::UbershaderLoader(Engine* engine, const void* archive, size_t archiveByteCount) :
+        mEngine(engine),
+        mMaterials(*engine) {
     unsigned char texels[4] = {};
     mDummyTexture = Texture::Builder()
             .width(1).height(1)
@@ -82,7 +82,7 @@ UbershaderLoader::UbershaderLoader(Engine* engine) : mEngine(engine), mMaterials
     Texture::PixelBufferDescriptor pbd(texels, sizeof(texels), Texture::Format::RGBA,
             Texture::Type::UBYTE);
     mDummyTexture->setImage(*mEngine, 0, std::move(pbd));
-    mMaterials.load((void*) GLTFRESOURCES_FULL_DATA, GLTFRESOURCES_FULL_SIZE);
+    mMaterials.load(archive, archiveByteCount);
 }
 
 size_t UbershaderLoader::getMaterialsCount() const noexcept {
@@ -286,8 +286,9 @@ MaterialInstance* UbershaderLoader::createMaterialInstance(MaterialKey* config, 
 
 namespace gltfio {
 
-MaterialProvider* createUbershaderLoader(filament::Engine* engine) {
-    return new UbershaderLoader(engine);
+MaterialProvider* createUbershaderLoader(Engine* engine, const void* archive,
+        size_t archiveByteCount) {
+    return new UbershaderLoader(engine, archive, archiveByteCount);
 }
 
 } // namespace gltfio

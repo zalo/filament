@@ -196,12 +196,11 @@ MaterialProvider* createMaterialGenerator(filament::Engine* engine, bool optimiz
  *
  * @return New material provider that can quickly load a material from a cache.
  *
- * Requires \c libgltfio_resources to be linked in.
- *
  * @see createMaterialGenerator
  */
 UTILS_PUBLIC
-MaterialProvider* createUbershaderLoader(filament::Engine* engine);
+MaterialProvider* createUbershaderLoader(filament::Engine* engine, const void* archive,
+        size_t archiveByteCount);
 
 } // namespace gltfio
 

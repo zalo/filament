@@ -251,8 +251,12 @@ int main(int argc, char** argv) {
         app.engine = engine;
         app.names = new NameComponentManager(EntityManager::get());
         app.viewer = new ViewerGui(engine, scene, view, app.instanceToAnimate);
-        app.materials = (app.materialSource == GENERATE_SHADERS) ?
-                createMaterialGenerator(engine) : createUbershaderLoader(engine);
+
+        const void* ubershaderArchive = GLTF_VIEWER_DEFAULT_MATERIALS_DATA;
+        const size_t ubershaderSize = GLTF_VIEWER_DEFAULT_MATERIALS_SIZE;
+        app.materials = (app.materialSource == GENERATE_SHADERS) ? createMaterialGenerator(engine) :
+                createUbershaderLoader(engine, ubershaderArchive, ubershaderSize);
+
         app.loader = AssetLoader::create({engine, app.materials, app.names });
         if (filename.isEmpty()) {
             app.asset = app.loader->createInstancedAsset(

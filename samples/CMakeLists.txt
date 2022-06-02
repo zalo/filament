@@ -172,14 +172,17 @@ endif()
 add_library(suzanne-resources ${DUMMY_SRC} ${RESGEN_SOURCE})
 
 # ==================================================================================================
-# Resources for gltf_viewer
+# Resources for gltf_viewer and gltf_instances
 # ==================================================================================================
 
 add_library(gltf-resources ${DUMMY_SRC})
 
+get_property(UBERARCHIVE TARGET default_uberarchive PROPERTY fullpath)
+
 set(GLTF_VIEWER_RESOURCE_FILES
     ${ROOT_DIR}/third_party/models/DamagedHelmet/DamagedHelmet.glb
     ${MATERIAL_DIR}/groundShadow.filamat
+    ${UBERARCHIVE}
 )
 
 get_resgen_vars(${RESOURCE_DIR} gltf_viewer)
