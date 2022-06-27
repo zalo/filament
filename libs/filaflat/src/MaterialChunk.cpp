@@ -34,10 +34,9 @@ MaterialChunk::MaterialChunk(ChunkContainer const& container)
 
 MaterialChunk::~MaterialChunk() noexcept = default;
 
-bool MaterialChunk::readIndex(filamat::ChunkType materialTag) {
-
+bool MaterialChunk::initialize(filamat::ChunkType materialTag) {
     if (mBase != nullptr) {
-        // readIndex() should be called only once.
+        // initialize() should be called only once.
         return true;
     }
 
@@ -163,7 +162,8 @@ bool MaterialChunk::getSpirvShader(BlobDictionary const& dictionary,
 }
 
 bool MaterialChunk::getShader(ShaderBuilder& shaderBuilder,
-        BlobDictionary const& dictionary, uint8_t shaderModel, filament::Variant variant, uint8_t stage) {
+        BlobDictionary const& dictionary,
+        uint8_t shaderModel, filament::Variant variant, uint8_t stage) {
     switch (mMaterialTag) {
         case filamat::ChunkType::MaterialGlsl:
         case filamat::ChunkType::MaterialMetal:
@@ -174,6 +174,33 @@ bool MaterialChunk::getShader(ShaderBuilder& shaderBuilder,
             return false;
     }
 }
+
+size_t MaterialChunk::enumerateTextShaders(TextShaderInfo* records, size_t count,
+        BlobDictionary const& dictionary) {
+    if (records == nullptr) {
+        return mOffsets.size();
+    }
+    const size_t written = std::min(count, mOffsets.size());
+    auto iter = mOffsets.begin();
+    for (size_t i = 0; i < written; ++i, ++iter) {
+        TextShaderInfo& info = records[i];
+        info.model = (uint8_t) (iter->first >> 16);
+        info.variant = (filament::Variant) (iter->first & 0xff);
+        info.stage = (uint8_t) (0xff & (iter->first >> 8));
+        info.offset = iter->second;
+
+        ShaderBuilder builder;
+        UTILS_UNUSED_IN_RELEASE bool success =
+            getTextShader(mUnflattener, dictionary, builder, info.model, info.variant, info.stage);
+        assert_invariant(success);
+
+        char const* text = (char const*) builder.data();
+        info.stringLength = builder.size();
+        info.decodedShaderText = std::string(text, text + info.stringLength) + "\n";
+    }
+    return written;
+}
+
 
 } // namespace filaflat
 

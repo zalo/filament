@@ -32,8 +32,7 @@ class BlobDictionary;
 namespace filament {
 namespace matdbg {
 
-// ShaderExtractor is a utility class for extracting shader source from a material package. It works
-// in a manner similar to ShaderReplacer.
+// ShaderExtractor is a utility class for extracting shader source from a material package.
 class ShaderExtractor {
 public:
     ShaderExtractor(backend::Backend backend, const void* data, size_t size);

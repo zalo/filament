@@ -17,7 +17,6 @@
 #ifndef TNT_FILAMAT_MATERIAL_CHUNK_H
 #define TNT_FILAMAT_MATERIAL_CHUNK_H
 
-
 #include <filament/MaterialChunkType.h>
 
 #include <filaflat/Unflattener.h>
@@ -25,6 +24,9 @@
 #include <private/filament/Variant.h>
 
 #include <tsl/robin_map.h>
+
+#include <vector> // TODO: remove
+#include <string> // TODO: remove
 
 namespace filaflat {
 
@@ -38,12 +40,26 @@ public:
     ~MaterialChunk() noexcept;
 
     // call this once after container.parse() has been called
-    bool readIndex(filamat::ChunkType materialTag);
+    bool initialize(filamat::ChunkType materialTag);
 
     // call this as many times as needed
     bool getShader(ShaderBuilder& shaderBuilder,
             BlobDictionary const& dictionary,
             uint8_t shaderModel, filament::Variant variant, uint8_t stage);
+
+    struct TextShaderInfo {
+        uint8_t model;
+        filament::Variant variant;
+        uint8_t stage;
+        uint32_t offset;
+        std::vector<uint16_t> lineIndices;
+        std::string decodedShaderText;
+        uint32_t stringLength;
+    };
+
+    // Writes up to "count" records into the given pointer, or returns the available number.
+    size_t enumerateTextShaders(TextShaderInfo* records, size_t count,
+            BlobDictionary const& lines);
 
 private:
     ChunkContainer const& mContainer;

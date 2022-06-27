@@ -26,9 +26,8 @@
 
 namespace filaflat {
 
-// Allow read operation from an Unflattenable. All READ operation MUST go through the Unflattener
-// since it checks boundaries before readind. All read operations return values MUST be verified,
-// never assume a read will succeed.
+// Facilitates parsing of binary chunks by wrapping a weakly held buffer and input cursor.
+// Clients should always check the result code when calling one of the read methods.
 class UTILS_PUBLIC Unflattener {
 public:
     Unflattener(const uint8_t* src, const uint8_t* end)

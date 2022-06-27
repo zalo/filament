@@ -25,8 +25,7 @@
 namespace filament {
 namespace matdbg {
 
-// ShaderReplacer is a utility class for replacing shader source within a material package. It works
-// in a manner similar to ShaderExtractor.
+// ShaderReplacer is a utility class for replacing shader source within a material package.
 class ShaderReplacer {
 public:
     ShaderReplacer(backend::Backend backend, const void* data, size_t size);
