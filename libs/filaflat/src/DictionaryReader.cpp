@@ -68,7 +68,7 @@ bool DictionaryReader::unflatten(ChunkContainer const& container,
             if (spirvSize == 0) {
                 return false;
             }
-            BlobDictionary::Blob spirv(spirvSize);
+            BlobDictionary::ShaderContent spirv(spirvSize);
             if (!smolv::Decode(compressed, compressedSize, spirv.data(), spirvSize)) {
                 return false;
             }

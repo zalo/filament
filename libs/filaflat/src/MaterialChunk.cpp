@@ -127,6 +127,8 @@ bool MaterialChunk::getTextShader(Unflattener unflattener, BlobDictionary const&
         }
         size_t length;
         const char* string = dictionary.getBlob(lineIndex, &length);
+
+        // Replace null with newline.
         memcpy(&shaderContent[cursor], string, length - 1);
         cursor += length - 1;
         shaderContent[cursor++] = '\n';

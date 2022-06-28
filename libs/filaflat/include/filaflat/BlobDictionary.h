@@ -18,9 +18,12 @@
 #define TNT_FILAFLAT_BLOBDICTIONARY_H
 
 #include <cstdint>
-#include <vector>
 
 #include <stddef.h>
+
+#include <vector>
+
+#include <utils/FixedCapacityVector.h>
 
 namespace filaflat {
 
@@ -30,14 +33,14 @@ public:
     BlobDictionary() = default;
     ~BlobDictionary() = default;
 
-    // TODO: should this be called ShaderContent and should it be a FixedCapacityVector?
-    using Blob = std::vector<uint8_t>;
+    using ShaderContent = utils::FixedCapacityVector<uint8_t>;
 
     inline void addBlob(const char* blob, size_t len) noexcept {
-        mBlobs.emplace_back(blob, blob + len);
+        mBlobs.emplace_back(len);
+        memcpy(mBlobs.back().data(), blob, len);
     }
 
-    inline void addBlob(Blob&& blob) noexcept {
+    inline void addBlob(ShaderContent&& blob) noexcept {
         mBlobs.push_back(std::move(blob));
     }
 
@@ -60,7 +63,7 @@ public:
     }
 
 private:
-    std::vector<Blob> mBlobs;
+    std::vector<ShaderContent> mBlobs;
 };
 
 } // namespace filaflat
