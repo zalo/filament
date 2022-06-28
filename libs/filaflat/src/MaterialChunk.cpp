@@ -125,12 +125,11 @@ bool MaterialChunk::getTextShader(Unflattener unflattener, BlobDictionary const&
         if (!unflattener.read(&lineIndex)) {
             return false;
         }
-        size_t length;
-        const char* string = dictionary.getBlob(lineIndex, &length);
+        const auto& content = dictionary.getBlob(lineIndex);
 
         // Replace null with newline.
-        memcpy(&shaderContent[cursor], string, length - 1);
-        cursor += length - 1;
+        memcpy(&shaderContent[cursor], content.data(), content.size() - 1);
+        cursor += content.size() - 1;
         shaderContent[cursor++] = '\n';
     }
 
@@ -155,13 +154,7 @@ bool MaterialChunk::getSpirvShader(BlobDictionary const& dictionary,
         return false;
     }
 
-    size_t index = pos->second;
-    size_t shaderSize;
-    const char* blob = dictionary.getBlob(index, &shaderSize);
-
-    shaderContent.reserve(shaderSize);
-    shaderContent.resize(shaderSize);
-    memcpy(shaderContent.data(), blob, shaderSize);
+    shaderContent = dictionary.getBlob(pos->second);
     return true;
 }
 

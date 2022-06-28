@@ -52,10 +52,8 @@ public:
         mBlobs.reserve(size);
     }
 
-    // TODO: should this return a ShaderContent?
-    inline const char* getBlob(size_t index, size_t* size) const noexcept {
-        *size = mBlobs[index].size();
-        return (const char*) mBlobs[index].data();
+    inline const ShaderContent& getBlob(size_t index) const noexcept {
+        return mBlobs[index];
     }
 
     inline size_t size() const noexcept {
