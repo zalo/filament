@@ -201,6 +201,33 @@ size_t MaterialChunk::enumerateTextShaders(TextShaderInfo* records, size_t count
     return written;
 }
 
+size_t MaterialChunk::enumerateSpirvShaders(SpirvShaderInfo* records, size_t count,
+        BlobDictionary const& dictionary) {
+    if (records == nullptr) {
+        return mOffsets.size();
+    }
+    const size_t written = std::min(count, mOffsets.size());
+    auto iter = mOffsets.begin();
+    for (size_t i = 0; i < written; ++i, ++iter) {
+        SpirvShaderInfo& info = records[i];
+        info.model = (uint8_t) (iter->first >> 16);
+        info.variant = (filament::Variant) (iter->first & 0xff);
+        info.stage = (uint8_t) (0xff & (iter->first >> 8));
+        info.blobIndex = iter->second;
+
+        ShaderBuilder builder;
+        UTILS_UNUSED_IN_RELEASE bool success =
+            getSpirvShader(dictionary, builder, info.model, info.variant, info.stage);
+        assert_invariant(success);
+
+        char const* text = (char const*) builder.data();
+        assert_invariant(builder.size() % 4 == 0 && "SPIR-V should always be word aligned");
+        info.spirv.resize(builder.size() / 4);
+        memcpy(info.spirv.data(), builder.data(), builder.size());
+    }
+    return written;
+}
+
 
 } // namespace filaflat
 

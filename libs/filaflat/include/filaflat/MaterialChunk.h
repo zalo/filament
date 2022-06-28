@@ -36,6 +36,24 @@ class ShaderBuilder;
 
 class MaterialChunk {
 public:
+    struct TextShaderInfo {
+        uint8_t model;
+        filament::Variant variant;
+        uint8_t stage;
+        uint32_t offset; // is this necessary?
+        std::vector<uint16_t> lineIndices; // TODO: this should be moved into ShaderIndex
+        std::string decodedShaderText;
+        uint32_t stringLength; // is this necessary?
+    };
+
+    struct SpirvShaderInfo {
+        uint8_t model;
+        filament::Variant variant;
+        uint8_t stage;
+        uint32_t blobIndex; // TODO: this should be moved into BlobIndex
+        std::vector<uint32_t> spirv;
+    };
+
     explicit MaterialChunk(ChunkContainer const& container);
     ~MaterialChunk() noexcept;
 
@@ -47,18 +65,11 @@ public:
             BlobDictionary const& dictionary,
             uint8_t shaderModel, filament::Variant variant, uint8_t stage);
 
-    struct TextShaderInfo {
-        uint8_t model;
-        filament::Variant variant;
-        uint8_t stage;
-        uint32_t offset;
-        std::vector<uint16_t> lineIndices;
-        std::string decodedShaderText;
-        uint32_t stringLength;
-    };
-
     // Writes up to "count" records into the given pointer, or returns the available number.
     size_t enumerateTextShaders(TextShaderInfo* records, size_t count,
+            BlobDictionary const& lines);
+
+    size_t enumerateSpirvShaders(SpirvShaderInfo* records, size_t count,
             BlobDictionary const& lines);
 
 private:

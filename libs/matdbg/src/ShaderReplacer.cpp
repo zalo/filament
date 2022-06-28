@@ -86,10 +86,10 @@ private:
 class BlobIndex {
 public:
     // Consumes a chunk and builds the blob list.
-    void addDataBlobs(const uint8_t* chunkContent, size_t size, streampos ptr);
+    void addDataBlobs(ChunkType tag, const filaflat::ChunkContainer& cc);
 
     // Consumes a chunk and builds the shader records.
-    void addShaderRecords(const uint8_t* chunkContent, size_t size);
+    void addShaderRecords(ChunkType tag, const filaflat::ChunkContainer& cc);
 
     // Produces a chunk holding the blob list.
     void writeBlobsChunk(ChunkType tag, ostream& stream) const;
@@ -104,17 +104,12 @@ public:
     bool isEmpty() const { return mDataBlobs.size() == 0 && mShaderRecords.size() == 0; }
 
 private:
-    struct ShaderRecord {
-        uint8_t model;
-        Variant variant;
-        uint8_t stage;
-        uint32_t blobIndex;
-    };
-
-    using SpirvBlob = vector<unsigned int>;
+    using ShaderRecord = MaterialChunk::SpirvShaderInfo;
+    using SpirvBlob = vector<uint32_t>;
 
     vector<ShaderRecord> mShaderRecords;
     vector<SpirvBlob> mDataBlobs;
+    BlobDictionary mDictionary;
 };
 
 ShaderReplacer::ShaderReplacer(Backend backend, const void* data, size_t size) :
@@ -244,11 +239,15 @@ bool ShaderReplacer::replaceSpirv(ShaderModel shaderModel, Variant variant,
 
     slog.i << "Success re-generating SPIR-V. (" << sourceLength << " bytes)" << io::endl;
 
-    // Clone all chunks except Dictionary* and Material*.
+    // Gather existing shader info.
+    BlobIndex shaderIndex;
     filaflat::ChunkContainer const& cc = mOriginalPackage;
+    shaderIndex.addDataBlobs(mDictionaryTag, cc);
+    shaderIndex.addShaderRecords(mMaterialTag, cc);
+
+    // Clone all chunks except Dictionary* and Material*.
     stringstream sstream(string((const char*) cc.getData(), cc.getSize()));
     stringstream tstream;
-    BlobIndex shaderIndex;
     {
         uint64_t type;
         uint32_t size;
@@ -259,12 +258,7 @@ bool ShaderReplacer::replaceSpirv(ShaderModel shaderModel, Variant variant,
             streampos pos = sstream.tellg();
             content.resize(size);
             sstream.read((char*) content.data(), size);
-            if (ChunkType(type) == mDictionaryTag) {
-                shaderIndex.addDataBlobs(content.data(), size, pos);
-                continue;
-            }
-            if (ChunkType(type) == mMaterialTag) {
-                shaderIndex.addShaderRecords(content.data(), size);
+            if (ChunkType(type) == mDictionaryTag || ChunkType(type) == mMaterialTag) {
                 continue;
             }
             tstream.write((char*) &type, sizeof(type));
@@ -432,39 +426,24 @@ void ShaderIndex::encodeShadersToIndices() {
     }
 }
 
-void BlobIndex::addDataBlobs(const uint8_t* chunkContent, size_t size, streampos pos) {
-    const uint8_t* ptr = chunkContent;
-    const uint32_t compression = *((const uint32_t*) ptr);
-    ptr += 4;
-    const uint32_t blobCount = *((const uint32_t*) ptr);
-    ptr += 4;
-    mDataBlobs.resize(blobCount);
-    for (uint32_t i = 0; i < blobCount; i++) {
-        // Skip alignment padding.
-        ptr += (8 - (intptr_t(pos + ptr - chunkContent) % 8)) % 8;
-
-        // Read byte count, advance cursor, and allocate buffer.
-        const uint64_t byteCount = *((const uint64_t*) ptr);
-        ptr += sizeof(uint64_t);
-        mDataBlobs[i].resize(byteCount);
-
-        // Copy the buffer and advance the cursor.
-        memcpy(mDataBlobs[i].data(), ptr, byteCount);
-        ptr += byteCount;
+void BlobIndex::addDataBlobs(ChunkType tag, const filaflat::ChunkContainer& cc) {
+    DictionaryReader::unflatten(cc, tag, mDictionary);
+    const size_t count = mDictionary.size();
+    mDataBlobs.resize(count);
+    for (size_t i = 0; i < count; ++i) {
+        size_t size;
+        const char* data = mDictionary.getBlob(i, &size);
+        assert_invariant(size % 4 == 0);
+        mDataBlobs[i].resize(size / 4);
+        memcpy(mDataBlobs[i].data(), data, size);
     }
 }
 
-void BlobIndex::addShaderRecords(const uint8_t* chunkContent, size_t size) {
-    stringstream stream(string((const char*) chunkContent, size));
-    uint64_t recordCount;
-    stream.read((char*) &recordCount, sizeof(recordCount));
-    mShaderRecords.resize(recordCount);
-    for (auto& record : mShaderRecords) {
-        stream.read((char*) &record.model, sizeof(ShaderRecord::model));
-        stream.read((char*) &record.variant, sizeof(ShaderRecord::variant));
-        stream.read((char*) &record.stage, sizeof(ShaderRecord::stage));
-        stream.read((char*) &record.blobIndex, sizeof(ShaderRecord::blobIndex));
-    }
+void BlobIndex::addShaderRecords(ChunkType tag, const filaflat::ChunkContainer& cc) {
+    filaflat::MaterialChunk mc(cc);
+    mc.initialize(tag);
+    mShaderRecords.resize(mc.enumerateSpirvShaders(nullptr, 0, mDictionary));
+    mc.enumerateSpirvShaders(mShaderRecords.data(), mShaderRecords.size(), mDictionary);
 }
 
 void BlobIndex::writeBlobsChunk(ChunkType tag, ostream& stream) const {
@@ -529,6 +508,7 @@ void BlobIndex::replaceShader(ShaderModel shaderModel, Variant variant,
     const uint8_t model = (uint8_t) shaderModel;
     for (auto& record : mShaderRecords) {
         if (record.model == model && record.variant == variant && record.stage == stage) {
+            assert_invariant(record.blobIndex < mDataBlobs.size());
             auto& blob = mDataBlobs[record.blobIndex];
             blob.resize(compressed.size());
             memcpy(blob.data(), compressed.data(), compressed.size());

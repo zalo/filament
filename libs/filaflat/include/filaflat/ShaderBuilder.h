@@ -24,6 +24,8 @@
 
 namespace filaflat {
 
+// Facilitates creation of binary blob by wrapping a buffer and an output cursor.
+// TODO: consider removing this class entirely, juse use utils::FixedCapacityVector.
 class ShaderBuilder {
 public:
     ShaderBuilder();
