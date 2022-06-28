@@ -55,11 +55,6 @@ public:
         return (const char*) mBlobs[index].data();
     }
 
-    // TODO: remove this. strlen is slow.
-    inline const char* getString(size_t index) const noexcept {
-        return (const char*) mBlobs[index].data();
-    }
-
     inline size_t size() const noexcept {
         return mBlobs.size();
     }
