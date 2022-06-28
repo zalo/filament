@@ -24,13 +24,16 @@
 
 #include <private/filament/Variant.h>
 
+#include <utils/FixedCapacityVector.h>
+
 #include <tsl/robin_map.h>
 
 namespace filaflat {
 
 class BlobDictionary;
 class ChunkContainer;
-class ShaderBuilder;
+
+using ShaderContent = utils::FixedCapacityVector<uint8_t>;
 
 class MaterialChunk {
 public:
@@ -41,7 +44,7 @@ public:
     bool readIndex(filamat::ChunkType materialTag);
 
     // call this as many times as needed
-    bool getShader(ShaderBuilder& shaderBuilder,
+    bool getShader(ShaderContent& shaderContent,
             BlobDictionary const& dictionary,
             uint8_t shaderModel, filament::Variant variant, uint8_t stage);
 
@@ -53,11 +56,11 @@ private:
     tsl::robin_map<uint32_t, uint32_t> mOffsets;
 
     bool getTextShader(Unflattener unflattener,
-            BlobDictionary const& dictionary, ShaderBuilder& shaderBuilder,
+            BlobDictionary const& dictionary, ShaderContent& shaderContent,
             uint8_t shaderModel, filament::Variant variant, uint8_t ps);
 
     bool getSpirvShader(
-            BlobDictionary const& dictionary, ShaderBuilder& shaderBuilder,
+            BlobDictionary const& dictionary, ShaderContent& shaderContent,
             uint8_t shaderModel, filament::Variant variant, uint8_t stage);
 };
 

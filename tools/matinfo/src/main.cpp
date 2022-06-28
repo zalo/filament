@@ -404,7 +404,7 @@ static bool parseChunks(Config config, void* data, size_t size) {
     }
 
     if (config.printGLSL || config.printSPIRV || config.printMetal) {
-        filaflat::ShaderBuilder builder;
+        filaflat::ShaderContent content;
         std::vector<ShaderInfo> info;
 
         if (config.printGLSL) {
@@ -425,10 +425,10 @@ static bool parseChunks(Config config, void* data, size_t size) {
             }
 
             const auto& item = info[config.shaderIndex];
-            parser.getShader(item.shaderModel, item.variant, item.pipelineStage, builder);
+            parser.getShader(item.shaderModel, item.variant, item.pipelineStage, content);
 
             // Casted to char* to print as a string rather than hex value.
-            std::cout << (const char*) builder.data();
+            std::cout << (const char*) content.data();
 
             return true;
         }

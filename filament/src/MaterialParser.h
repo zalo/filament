@@ -33,7 +33,6 @@
 
 namespace filaflat {
 class ChunkContainer;
-class ShaderBuilder;
 class Unflattener;
 }
 
@@ -93,7 +92,7 @@ public:
     bool getSpecularAntiAliasingVariance(float* value) const noexcept;
     bool getSpecularAntiAliasingThreshold(float* value) const noexcept;
 
-    bool getShader(filaflat::ShaderBuilder& shader, backend::ShaderModel shaderModel,
+    bool getShader(filaflat::ShaderContent& shader, backend::ShaderModel shaderModel,
             Variant variant, backend::ShaderType stage) noexcept;
 
 private:

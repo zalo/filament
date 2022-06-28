@@ -30,6 +30,7 @@ public:
     BlobDictionary() = default;
     ~BlobDictionary() = default;
 
+    // TODO: should this be called ShaderContent and should it be a FixedCapacityVector?
     using Blob = std::vector<uint8_t>;
 
     inline void addBlob(const char* blob, size_t len) noexcept {
@@ -48,11 +49,13 @@ public:
         mBlobs.reserve(size);
     }
 
+    // TODO: should this return a ShaderContent?
     inline const char* getBlob(size_t index, size_t* size) const noexcept {
         *size = mBlobs[index].size();
         return (const char*) mBlobs[index].data();
     }
 
+    // TODO: remove this. strlen is slow.
     inline const char* getString(size_t index) const noexcept {
         return (const char*) mBlobs[index].data();
     }

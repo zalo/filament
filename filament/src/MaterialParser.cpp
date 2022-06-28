@@ -20,7 +20,6 @@
 #include <filaflat/BlobDictionary.h>
 #include <filaflat/ChunkContainer.h>
 #include <filaflat/MaterialChunk.h>
-#include <filaflat/ShaderBuilder.h>
 #include <filaflat/DictionaryReader.h>
 #include <filaflat/Unflattener.h>
 
@@ -280,7 +279,7 @@ bool MaterialParser::getReflectionMode(ReflectionMode* value) const noexcept {
     return mImpl.getFromSimpleChunk(ChunkType::MaterialReflectionMode, (uint8_t*)value);
 }
 
-bool MaterialParser::getShader(ShaderBuilder& shader,
+bool MaterialParser::getShader(ShaderContent& shader,
         ShaderModel shaderModel, Variant variant, ShaderType stage) noexcept {
     return mImpl.mMaterialChunk.getShader(shader,
             mImpl.mBlobDictionary, (uint8_t)shaderModel, variant, stage);

@@ -20,7 +20,6 @@
 #include <filaflat/ChunkContainer.h>
 #include <filaflat/DictionaryReader.h>
 #include <filaflat/MaterialChunk.h>
-#include <filaflat/ShaderBuilder.h>
 #include <filaflat/Unflattener.h>
 
 #include <filament/MaterialChunkType.h>
@@ -73,7 +72,7 @@ bool ShaderExtractor::getDictionary(BlobDictionary& dictionary) noexcept {
 }
 
 bool ShaderExtractor::getShader(ShaderModel shaderModel,
-        Variant variant, ShaderType stage, ShaderBuilder& shader) noexcept {
+        Variant variant, ShaderType stage, ShaderContent& shader) noexcept {
 
     ChunkContainer const& cc = mChunkContainer;
     if (!cc.hasChunk(mMaterialTag) || !cc.hasChunk(mDictionaryTag)) {
