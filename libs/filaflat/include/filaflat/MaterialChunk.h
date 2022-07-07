@@ -26,6 +26,11 @@
 
 #include <tsl/robin_map.h>
 
+namespace filament::matdbg {
+class ShaderIndex;
+class BlobIndex;
+}
+
 namespace filaflat {
 
 class MaterialChunk {
@@ -55,6 +60,9 @@ private:
     bool getSpirvShader(
             BlobDictionary const& dictionary, ShaderContent& shaderContent,
             uint8_t shaderModel, filament::Variant variant, uint8_t stage);
+
+   friend class filament::matdbg::ShaderIndex;
+   friend class filament::matdbg::BlobIndex;
 };
 
 } // namespace filamat
