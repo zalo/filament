@@ -159,7 +159,7 @@ void Ktx2Provider::updateQueue() {
         if (item->state != QueueItemState::TRANSCODING) {
             continue;
         }
-        Texture* texture = item->async->getTexture();
+        item->async->getTexture();
         const TranscoderState state = item->transcoderState.load();
         if (state != TranscoderState::NOT_STARTED) {
             if (item->job) {

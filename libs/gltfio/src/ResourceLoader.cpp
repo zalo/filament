@@ -780,7 +780,6 @@ void ResourceLoader::Impl::computeTangents(FFilamentAsset* asset) {
         if (UTILS_UNLIKELY(!mesh || !mesh->weights_count)) {
             continue;
         }
-        cgltf_primitive const* prims = mesh->primitives;
         for (cgltf_size pindex = 0, pcount = mesh->primitives_count; pindex < pcount; ++pindex) {
             const cgltf_primitive& prim = mesh->primitives[pindex];
             const auto& gltfioPrim = asset->mMeshCache.at(mesh)[pindex];
@@ -790,7 +789,6 @@ void ResourceLoader::Impl::computeTangents(FFilamentAsset* asset) {
                 bool hasNormals = false;
                 for (cgltf_size aindex = 0; aindex < target.attributes_count; aindex++) {
                     const cgltf_attribute& attribute = target.attributes[aindex];
-                    const cgltf_accessor* accessor = attribute.data;
                     const cgltf_attribute_type atype = attribute.type;
                     if (atype != cgltf_attribute_type_tangent) {
                         continue;

@@ -306,7 +306,6 @@ void FAssetLoader::createAsset(const cgltf_data* srcAsset, size_t numInstances) 
     }
 
     // Build a mapping of root nodes to scene membership sets.
-    auto& nm = mNodeManager;
     assert_invariant(srcAsset->scenes_count <= NodeManager::MAX_SCENE_COUNT);
     mRootNodes.clear();
     const size_t sic = std::min(srcAsset->scenes_count, NodeManager::MAX_SCENE_COUNT);
@@ -815,7 +814,6 @@ bool FAssetLoader::createPrimitive(const cgltf_primitive* inPrim, Primitive* out
             const cgltf_attribute& attribute = morphTarget.attributes[aindex];
             const cgltf_accessor* accessor = attribute.data;
             const cgltf_attribute_type atype = attribute.type;
-            const int morphId = targetIndex + 1;
 
             // The glTF normal and tangent data are ignored here, but honored in ResourceLoader.
             if (atype == cgltf_attribute_type_normal || atype == cgltf_attribute_type_tangent) {
