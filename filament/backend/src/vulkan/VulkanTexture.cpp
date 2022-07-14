@@ -66,7 +66,7 @@ VulkanTexture::VulkanTexture(VulkanContext& context, SamplerType target, uint8_t
         imageInfo.arrayLayers = 6;
         imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
     }
-    if (target == SamplerType::SAMPLER_2D_ARRAY) {
+    if (target == SamplerType::SAMPLER_2D_ARRAY || target == SamplerType::SAMPLER_CUBEMAP_ARRAY) {
         imageInfo.arrayLayers = depth;
         imageInfo.extent.depth = 1;
         // NOTE: We do not use VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT here because:
@@ -169,6 +169,8 @@ VulkanTexture::VulkanTexture(VulkanContext& context, SamplerType target, uint8_t
     mPrimaryViewRange.baseArrayLayer = 0;
     if (target == SamplerType::SAMPLER_CUBEMAP) {
         mPrimaryViewRange.layerCount = 6;
+    } else if (target == SamplerType::SAMPLER_CUBEMAP_ARRAY) {
+        mPrimaryViewRange.layerCount = depth;
     } else if (target == SamplerType::SAMPLER_2D_ARRAY) {
         mPrimaryViewRange.layerCount = depth;
     } else if (target == SamplerType::SAMPLER_3D) {
@@ -262,7 +264,9 @@ void VulkanTexture::updateImage(const PixelBufferDescriptor& data, uint32_t widt
     };
 
     // Vulkan specifies subregions for 3D textures differently than from 2D arrays.
-    if (target == SamplerType::SAMPLER_2D_ARRAY || target == SamplerType::SAMPLER_CUBEMAP) {
+    if (    target == SamplerType::SAMPLER_2D_ARRAY ||
+            target == SamplerType::SAMPLER_CUBEMAP ||
+            target == SamplerType::SAMPLER_CUBEMAP_ARRAY) {
         copyRegion.imageOffset.z = 0;
         copyRegion.imageExtent.depth = 1;
         copyRegion.imageSubresource.baseArrayLayer = zoffset;
