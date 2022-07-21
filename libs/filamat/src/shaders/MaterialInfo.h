@@ -60,6 +60,7 @@ struct UTILS_PUBLIC MaterialInfo {
     filament::SubpassInfo subpass;
     filament::SamplerBindingMap samplerBindings;
     filament::ShaderQuality quality;
+    filament::backend::FeatureLevel featureLevel;
 };
 
 }
