@@ -435,6 +435,7 @@ MetalTexture::MetalTexture(MetalContext& context, SamplerType target, uint8_t le
     const BOOL multisampled = samples > 1;
 
 #if defined(IOS)
+    const BOOL textureArray = target == SamplerType::SAMPLER_2D_ARRAY;
     ASSERT_PRECONDITION(!textureArray || !multisampled,
             "iOS does not support multisampled texture arrays.");
 #endif

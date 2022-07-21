@@ -107,6 +107,16 @@ using namespace glext;
     #define GL_TEXTURE_2D_MULTISAMPLE         0x9100
     #define GL_TIME_ELAPSED                   0x88BF
 
+    #define GL_TEXTURE_CUBE_MAP_ARRAY               0x9009
+    #define GL_TEXTURE_BINDING_CUBE_MAP_ARRAY       0x900A
+    #define GL_SAMPLER_CUBE_MAP_ARRAY               0x900C
+    #define GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW        0x900D
+    #define GL_INT_SAMPLER_CUBE_MAP_ARRAY           0x900E
+    #define GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY  0x900F
+    #define GL_IMAGE_CUBE_MAP_ARRAY                 0x9054
+    #define GL_INT_IMAGE_CUBE_MAP_ARRAY             0x905F
+    #define GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY    0x906A
+
 #ifdef GL_EXT_multisampled_render_to_texture
     extern PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC glRenderbufferStorageMultisampleEXT;
     extern PFNGLFRAMEBUFFERTEXTURE2DMULTISAMPLEEXTPROC glFramebufferTexture2DMultisampleEXT;
