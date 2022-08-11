@@ -143,7 +143,7 @@ public class ResourceLoader {
     /**
      * Starts an asynchronous resource load.
      *
-     * Returns false if the loading process was unable to start.
+     * Returns false if the loading process has already started.
      *
      * This is an alternative to #loadResources and requires periodic calls to #asyncUpdateLoad.
      * On multi-threaded systems this creates threads for texture decoding.

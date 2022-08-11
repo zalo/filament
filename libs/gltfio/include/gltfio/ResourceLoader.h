@@ -119,8 +119,7 @@ public:
      * asset by transforming the vertex data format if necessary, decoding image files, supplying
      * tangent data, etc.
      *
-     * Returns false if resources have already been loaded, or if one or more resources could not
-     * be loaded.
+     * Returns false if the loading process has already started.
      *
      * Note: this method is synchronous and blocks until all textures have been decoded.
      * For an asynchronous alternative, see #asyncBeginLoad.
@@ -130,7 +129,7 @@ public:
     /**
      * Starts an asynchronous resource load.
      *
-     * Returns false if the loading process was unable to start.
+     * Returns false if the loading process has already started.
      *
      * This is an alternative to #loadResources and requires periodic calls to #asyncUpdateLoad.
      * On multi-threaded systems this creates threads for texture decoding.

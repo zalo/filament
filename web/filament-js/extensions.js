@@ -587,33 +587,30 @@ Filament.loadClassExtensions = function() {
         resourceLoader.addStbProvider("image/png", stbProvider);
         resourceLoader.addKtx2Provider("image/ktx2", ktx2Provider);
 
-        const onComplete = () => {
-            resourceLoader.asyncBeginLoad(asset);
+        resourceLoader.asyncBeginLoad(asset);
 
-            // NOTE: This decodes in the wasm layer instead of using Canvas2D, which allows Filament
-            // to have more control (handling of alpha, srgb, etc) and improves parity with native
-            // platforms. In the future we may wish to offload this to web workers.
+        // NOTE: This decodes in the wasm layer instead of using Canvas2D, which allows Filament
+        // to have more control (handling of alpha, srgb, etc) and improves parity with native
+        // platforms. In the future we may wish to offload this to web workers.
 
-            // Decode a single PNG or JPG every 30 milliseconds, or at the specified interval.
-            const timer = setInterval(() => {
-                resourceLoader.asyncUpdateLoad();
-                const progress = resourceLoader.asyncGetLoadProgress();
-                if (progress >= 1) {
-                    clearInterval(timer);
-                    resourceLoader.delete();
-                    stbProvider.delete();
-                    onDone();
-                }
-            }, interval);
-        };
+        // Decode a single PNG or JPG every 30 milliseconds, or at the specified interval.
+        const timer = setInterval(() => {
+            resourceLoader.asyncUpdateLoad();
+            const progress = resourceLoader.asyncGetLoadProgress();
+            if (progress >= 1) {
+//                clearInterval(timer);
+//                resourceLoader.delete();
+//                stbProvider.delete();
+//                onDone();
+            }
+        }, interval);
 
         if (urlset.size == 0) {
-            onComplete();
             return;
         }
 
         // Begin downloading all external resources.
-        Filament.fetch(Array.from(urlset), onComplete, function(url) {
+        Filament.fetch(Array.from(urlset), null, function(url) {
             const buffer = getBufferDescriptor(url);
             const name = urlToName[url];
             resourceLoader.addResourceData(name, buffer);

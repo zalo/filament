@@ -70,19 +70,23 @@ using UriDataCache = tsl::robin_map<std::string, gltfio::ResourceLoader::BufferD
 using TextureProviderList = tsl::robin_map<std::string, TextureProvider*>;
 
 struct ResourceLoader::Impl {
-    Impl(const ResourceConfiguration& config) {
-        mGltfPath = std::string(config.gltfPath ? config.gltfPath : "");
-        mEngine = config.engine;
-        mNormalizeSkinningWeights = config.normalizeSkinningWeights;
-        mRecomputeBoundingBoxes = config.recomputeBoundingBoxes;
-        mIgnoreBindTransform = config.ignoreBindTransform;
-    }
+    Impl(const ResourceConfiguration& config) :
+        mGltfPath(config.gltfPath ? config.gltfPath : ""),
+        mEngine(config.engine),
+        mNormalizeSkinningWeights(config.normalizeSkinningWeights),
+        mRecomputeBoundingBoxes(config.recomputeBoundingBoxes),
+        mIgnoreBindTransform(config.ignoreBindTransform) {}
 
-    Engine* mEngine;
-    bool mNormalizeSkinningWeights;
-    bool mRecomputeBoundingBoxes;
+    Engine* const mEngine;
+    const bool mNormalizeSkinningWeights;
+    const bool mRecomputeBoundingBoxes;
+    const std::string mGltfPath;
+
+    // TODO: this should be const
     bool mIgnoreBindTransform;
-    std::string mGltfPath;
+
+    bool mDracoComplete = false;
+    bool mTexturesComplete = false;
 
     // User-provided resource data with URI string keys, populated with addResourceData().
     // This is used on platforms without traditional file systems, such as Android, iOS, and WebGL.
@@ -97,8 +101,11 @@ struct ResourceLoader::Impl {
 
     FFilamentAsset* mAsyncAsset = nullptr;
 
+    float asyncGetLoadProgress() const;
+    void decodeDracoMeshes(FFilamentAsset* asset);
+    void addResourceData(const char* uri, BufferDescriptor&& buffer);
     void computeTangents(FFilamentAsset* asset);
-    bool createTextures(FFilamentAsset* asset, bool async);
+    void createTextures(FFilamentAsset* asset, bool async);
     void cancelTextureDecoding();
     Texture* getOrCreateTexture(FFilamentAsset* asset, const TextureSlot& tb);
     ~Impl();
@@ -202,7 +209,7 @@ static bool requiresPacking(const cgltf_accessor* accessor) {
     }
 }
 
-static void decodeDracoMeshes(FFilamentAsset* asset) {
+void ResourceLoader::Impl::decodeDracoMeshes(FFilamentAsset* asset) {
     DracoCache* dracoCache = &asset->mSourceAsset->dracoCache;
 
     // For a given primitive and attribute, find the corresponding accessor.
@@ -216,6 +223,9 @@ static void decodeDracoMeshes(FFilamentAsset* asset) {
         return (cgltf_accessor*) nullptr;
     };
 
+    // Assume completeness, then set to false when encountering undownloaded resources.
+    mDracoComplete = true;
+
     // Go through every primitive and check if it has a Draco mesh.
     for (auto& pair : asset->mPrimitives) {
         const cgltf_primitive* prim = pair.first;
@@ -224,6 +234,13 @@ static void decodeDracoMeshes(FFilamentAsset* asset) {
         }
 
         const cgltf_draco_mesh_compression& draco = prim->draco_mesh_compression;
+
+        // Check if the app has not yet called addResourceData() for this texture,
+        // perhaps because it is still being downloaded.
+        if (draco.buffer_view->buffer->data == nullptr) {
+            mDracoComplete = false;
+            continue;
+        }
 
         // If an error occurs, we can simply set the primitive's associated VertexBuffer to null.
         // This does not cause a leak because it is a weak reference.
@@ -302,20 +319,34 @@ ResourceLoader::~ResourceLoader() {
 }
 
 void ResourceLoader::addResourceData(const char* uri, BufferDescriptor&& buffer) {
+    pImpl->addResourceData(uri, std::move(buffer));
+}
+
+void ResourceLoader::Impl::addResourceData(const char* uri, BufferDescriptor&& buffer) {
+
     // Start an async marker the first time this is called and end it when
     // finalization begins. This marker provides a rough indicator of how long
     // the client is taking to load raw data blobs from storage.
-    if (pImpl->mUriDataCache.empty()) {
+    if (mUriDataCache.empty()) {
         SYSTRACE_CONTEXT();
         SYSTRACE_ASYNC_BEGIN("addResourceData", 1);
     }
     // NOTE: replacing an existing item in a robin map does not seem to behave as expected.
     // To work around this, we explicitly erase the old element if it already exists.
-    auto iter = pImpl->mUriDataCache.find(uri);
-    if (iter != pImpl->mUriDataCache.end()) {
-        pImpl->mUriDataCache.erase(iter);
+    auto iter = mUriDataCache.find(uri);
+    if (iter != mUriDataCache.end()) {
+        mUriDataCache.erase(iter);
     }
-    pImpl->mUriDataCache.emplace(uri, std::move(buffer));
+    mUriDataCache.emplace(uri, std::move(buffer));
+
+    if (mAsyncAsset && !mDracoComplete) {
+        decodeDracoMeshes(mAsyncAsset);
+        computeTangents(mAsyncAsset);
+    }
+
+    if (mAsyncAsset && !mTexturesComplete) {
+        createTextures(mAsyncAsset, true);
+    }
 }
 
 bool ResourceLoader::hasResourceData(const char* uri) const {
@@ -336,14 +367,16 @@ bool ResourceLoader::loadResources(FFilamentAsset* asset, bool async) {
     SYSTRACE_CONTEXT();
     SYSTRACE_ASYNC_END("addResourceData", 1);
 
+    if (asset->mResourcesLoaded) {
+        return false;
+    }
+    asset->mResourcesLoaded = true;
+
     // Clear our texture caches. Previous calls to loadResources may have populated these, but the
     // Texture objects could have since been destroyed.
     pImpl->mBufferTextureCache.clear();
     pImpl->mFilepathTextureCache.clear();
 
-    if (asset->mResourcesLoaded) {
-        return false;
-    }
     const cgltf_data* gltf = asset->mSourceAsset->hierarchy;
     cgltf_options options {};
 
@@ -400,7 +433,7 @@ bool ResourceLoader::loadResources(FFilamentAsset* asset, bool async) {
 
     // Decompress Draco meshes early on, which allows us to exploit subsequent processing such as
     // tangent generation.
-    decodeDracoMeshes(asset);
+    pImpl->decodeDracoMeshes(asset);
 
     // Normalize skinning weights, then "import" each skin into the asset by building a mapping of
     // skins to their affected entities.
@@ -505,7 +538,7 @@ bool ResourceLoader::loadResources(FFilamentAsset* asset, bool async) {
     pImpl->computeTangents(asset);
 
     // Finally, create Filament Textures and begin loading image files.
-    asset->mResourcesLoaded = pImpl->createTextures(asset, async);
+    pImpl->createTextures(asset, async);
 
     // Non-textured renderables are now considered ready, and we can guarantee that no new
     // materials or textures will be added. notify the dependency graph.
@@ -513,7 +546,7 @@ bool ResourceLoader::loadResources(FFilamentAsset* asset, bool async) {
 
     asset->createAnimators();
 
-    return asset->mResourcesLoaded;
+    return true;
 }
 
 bool ResourceLoader::asyncBeginLoad(FilamentAsset* asset) {
@@ -532,12 +565,19 @@ void ResourceLoader::addTextureProvider(const char* mimeType, TextureProvider* p
 }
 
 float ResourceLoader::asyncGetLoadProgress() const {
-    if (pImpl->mTextureProviders.empty() || !pImpl->mAsyncAsset) {
+    return pImpl->asyncGetLoadProgress();
+}
+
+float ResourceLoader::Impl::asyncGetLoadProgress() const {
+    if (mTextureProviders.empty() || !mAsyncAsset) {
         return 0;
+    }
+    if (mDracoComplete && mTexturesComplete) {
+        return 1.0f;
     }
     size_t pushedCount = 0;
     size_t poppedCount = 0;
-    for (const auto& iter : pImpl->mTextureProviders) {
+    for (const auto& iter : mTextureProviders) {
         pushedCount += iter.second->getPushedCount();
         poppedCount += iter.second->getPoppedCount();
     }
@@ -649,10 +689,9 @@ Texture* ResourceLoader::Impl::getOrCreateTexture(FFilamentAsset* asset, const T
             mFilepathTextureCache[uri] = texture;
         }
 
-    // If the platform does not have a filesystem, emit an error and move on.
     } else {
-        slog.e << "Unable to load " << uri << io::endl;
-        asset->mDependencyGraph.markAsError(tb.materialInstance);
+        // If we reach here, the app has not yet called addResourceData() for this texture,
+        // perhaps because it is still being downloaded.
         return nullptr;
     }
 
@@ -675,7 +714,7 @@ void ResourceLoader::Impl::cancelTextureDecoding() {
     mAsyncAsset = nullptr;
 }
 
-bool ResourceLoader::Impl::createTextures(FFilamentAsset* asset, bool async) {
+void ResourceLoader::Impl::createTextures(FFilamentAsset* asset, bool async) {
     // If any decoding jobs are still underway from a previous load, wait for them to finish.
     for (const auto& iter : mTextureProviders) {
         iter.second->waitForCompletion();
@@ -693,15 +732,13 @@ bool ResourceLoader::Impl::createTextures(FFilamentAsset* asset, bool async) {
     assert_invariant(UTILS_HAS_THREADING || async);
 
     if (async) {
-        return true;
+        return;
     }
 
     for (const auto& iter : mTextureProviders) {
         iter.second->waitForCompletion();
         iter.second->updateQueue();
     }
-
-    return true;
 }
 
 void ResourceLoader::Impl::computeTangents(FFilamentAsset* asset) {
