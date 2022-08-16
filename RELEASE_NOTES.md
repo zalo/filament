@@ -5,6 +5,9 @@ A new header is inserted each time a *tag* is created.
 
 ## main branch
 
+- gltfio: add unified `AssetLoader::loadAsset()` method [⚠️ **API Change**]
+- gltfio: all assets are now "instanced" [⚠️ **API Change**]
+
 ## v1.25.6
 
 - Add CONFIG_MINSPEC_UBO_SIZE as a nicer way to allow exceeding the ES3.0 minspec.
