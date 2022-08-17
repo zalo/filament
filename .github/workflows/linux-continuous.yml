@@ -6,6 +6,7 @@ on:
       - main
       - release
       - rc/**
+      - feat-organize-folders-github-test
 
 jobs:
   build-linux:
